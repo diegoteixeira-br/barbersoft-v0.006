@@ -155,6 +155,23 @@ export function CalendarHeader({
           </Tooltip>
         )}
 
+        {view !== "month" && onToggleBusinessHours && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button 
+                variant={showBusinessHoursOnly ? "default" : "outline"} 
+                size="icon" 
+                onClick={onToggleBusinessHours}
+              >
+                <Clock className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              {showBusinessHoursOnly ? "Mostrar todos os horários (7h-23h)" : "Somente horário comercial"}
+            </TooltipContent>
+          </Tooltip>
+        )
+
         <Tooltip>
           <TooltipTrigger asChild>
             <Button variant="outline" size="icon" onClick={handleOpenDisplay}>
