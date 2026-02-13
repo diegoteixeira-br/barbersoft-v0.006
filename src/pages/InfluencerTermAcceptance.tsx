@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { FileText, CheckCircle2, Loader2, AlertCircle } from "lucide-react";
+import { FileText, CheckCircle2, Loader2, AlertCircle, Copy } from "lucide-react";
 import DOMPurify from "dompurify";
 
 export default function InfluencerTermAcceptance() {
@@ -141,6 +141,7 @@ export default function InfluencerTermAcceptance() {
   }
 
   if (accepted) {
+    const referralLink = `${window.location.origin}/auth?tab=signup&ref=${influencer?.referral_code}`;
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <Card className="max-w-md w-full">
@@ -153,6 +154,30 @@ export default function InfluencerTermAcceptance() {
             <p className="text-xs text-muted-foreground">
               Data: {influencer?.term_accepted_at ? new Date(influencer.term_accepted_at).toLocaleString("pt-BR") : new Date().toLocaleString("pt-BR")}
             </p>
+
+            <div className="mt-4 p-4 rounded-lg border bg-secondary/50 text-left space-y-2">
+              <p className="text-sm font-semibold">🔗 Seu link de indicação:</p>
+              <div className="flex items-center gap-2">
+                <input
+                  readOnly
+                  value={referralLink}
+                  className="flex-1 text-xs bg-background border rounded px-3 py-2 select-all"
+                  onClick={(e) => (e.target as HTMLInputElement).select()}
+                />
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => {
+                    navigator.clipboard.writeText(referralLink);
+                  }}
+                >
+                  <Copy className="h-4 w-4" />
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Compartilhe este link para que seus leads se cadastrem e você receba sua comissão.
+              </p>
+            </div>
           </CardContent>
         </Card>
       </div>

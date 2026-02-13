@@ -58,6 +58,7 @@ Deno.serve(async (req) => {
     }
 
     const termLink = `https://barbersoft.com.br/termo-influenciador/${inf.term_token}`;
+    const referralLink = `https://barbersoft.com.br/auth?tab=signup&ref=${inf.referral_code}`;
 
     const emailRes = await fetch("https://api.resend.com/emails", {
       method: "POST",
@@ -87,6 +88,15 @@ Deno.serve(async (req) => {
               <a href="${termLink}">${termLink}</a>
             </p>
             <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;" />
+            <div style="background-color: #f8f8f8; border-radius: 8px; padding: 16px; margin: 20px 0;">
+              <p style="font-weight: bold; margin: 0 0 8px 0;">🔗 Seu link de indicação:</p>
+              <p style="background: #fff; border: 1px solid #ddd; border-radius: 4px; padding: 10px; word-break: break-all; font-size: 13px; margin: 0;">
+                <a href="${referralLink}">${referralLink}</a>
+              </p>
+              <p style="color: #666; font-size: 11px; margin: 8px 0 0 0;">
+                Compartilhe este link para que seus leads se cadastrem e você receba sua comissão.
+              </p>
+            </div>
             <p style="color: #999; font-size: 11px; text-align: center;">
               BarberSoft - Sistema de Gestão para Barbearias
             </p>
