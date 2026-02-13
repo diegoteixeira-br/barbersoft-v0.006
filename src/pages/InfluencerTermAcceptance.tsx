@@ -86,10 +86,12 @@ export default function InfluencerTermAcceptance() {
 
   const getProcessedContent = () => {
     if (!termTemplate || !influencer) return "";
+    const referralLink = `${window.location.origin}/auth?tab=signup&ref=${influencer.referral_code}`;
     const raw = (termTemplate.content as string)
       .replace(/\{PERCENTUAL\}/g, String(influencer.commission_percent))
       .replace(/\{NOME_INFLUENCIADOR\}/g, influencer.name)
-      .replace(/\{DATA\}/g, new Date().toLocaleDateString("pt-BR"));
+      .replace(/\{DATA\}/g, new Date().toLocaleDateString("pt-BR"))
+      .replace(/\{LINK_INDICACAO\}/g, referralLink);
     return DOMPurify.sanitize(raw.replace(/\n/g, '<br/>'), {
       ALLOWED_TAGS: ['br', 'b', 'i', 'u', 'strong', 'em', 'p', 'ul', 'ol', 'li', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6'],
       ALLOWED_ATTR: []

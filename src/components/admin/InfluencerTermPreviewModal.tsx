@@ -27,10 +27,12 @@ export function InfluencerTermPreviewModal({ open, onOpenChange, influencer, ter
 
   if (!influencer || !termTemplate) return null;
 
+  const referralLink = `${window.location.origin}/auth?tab=signup&ref=${influencer.referral_code}`;
   const rawContent = termTemplate.content
     .replace(/\{PERCENTUAL\}/g, String(influencer.commission_percent))
     .replace(/\{NOME_INFLUENCIADOR\}/g, influencer.name)
-    .replace(/\{DATA\}/g, new Date().toLocaleDateString("pt-BR"));
+    .replace(/\{DATA\}/g, new Date().toLocaleDateString("pt-BR"))
+    .replace(/\{LINK_INDICACAO\}/g, referralLink);
 
   const sanitizedContent = DOMPurify.sanitize(rawContent.replace(/\n/g, '<br/>'), {
     ALLOWED_TAGS: ['br', 'b', 'i', 'u', 'strong', 'em', 'p', 'ul', 'ol', 'li', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6'],

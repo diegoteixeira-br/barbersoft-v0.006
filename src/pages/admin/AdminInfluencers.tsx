@@ -192,7 +192,7 @@ export default function AdminInfluencers() {
                 <Label className="text-slate-300">
                   Conteúdo do Termo
                   <span className="text-xs text-slate-500 ml-2">
-                    Variáveis: {"{NOME_INFLUENCIADOR}"}, {"{PERCENTUAL}"}, {"{DATA}"}
+                    Variáveis: {"{NOME_INFLUENCIADOR}"}, {"{PERCENTUAL}"}, {"{DATA}"}, {"{LINK_INDICACAO}"}
                   </span>
                 </Label>
                 <Textarea
