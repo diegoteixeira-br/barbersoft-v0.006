@@ -5,6 +5,8 @@ import { Plus, Users, Loader2, Building2 } from "lucide-react";
 import { useBarbers, Barber } from "@/hooks/useBarbers";
 import { useUnits } from "@/hooks/useUnits";
 import { useCurrentUnit } from "@/contexts/UnitContext";
+import { useCompany } from "@/hooks/useCompany";
+import { usePartnershipTerms, useTermAcceptances } from "@/hooks/usePartnershipTerms";
 import { BarberCard } from "@/components/barbers/BarberCard";
 import { BarberFormModal } from "@/components/barbers/BarberFormModal";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -12,6 +14,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 export default function Profissionais() {
   const { currentUnitId, isLoading: unitLoading } = useCurrentUnit();
   const { units } = useUnits();
+  const { company } = useCompany();
+  const { activeTerm } = usePartnershipTerms(company?.id || null);
+  const { acceptances } = useTermAcceptances(company?.id || null);
   const [unitFilter, setUnitFilter] = useState<string>("current");
   
   // Determine the unit ID to use for fetching barbers
@@ -128,17 +133,27 @@ export default function Profissionais() {
           </div>
         ) : (
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {barbers.map((barber) => (
-              <BarberCard
-                key={barber.id}
-                barber={barber}
-                onEdit={handleOpenModal}
-                onDelete={handleDelete}
-                onToggleActive={handleToggleActive}
-                onGenerateInvite={handleGenerateInvite}
-                showUnit={showUnitBadge}
-              />
-            ))}
+            {barbers.map((barber) => {
+              const barberAcceptance = acceptances.find(
+                (a: any) => a.barber_id === barber.id && a.term_id === activeTerm?.id
+              );
+              return (
+                <BarberCard
+                  key={barber.id}
+                  barber={barber}
+                  onEdit={handleOpenModal}
+                  onDelete={handleDelete}
+                  onToggleActive={handleToggleActive}
+                  onGenerateInvite={handleGenerateInvite}
+                  showUnit={showUnitBadge}
+                  hasActiveTerm={!!activeTerm}
+                  termAcceptance={barberAcceptance ? {
+                    accepted_at: barberAcceptance.accepted_at,
+                    term_version: (barberAcceptance as any).partnership_terms?.version || "",
+                  } : null}
+                />
+              );
+            })}
           </div>
         )}
       </div>

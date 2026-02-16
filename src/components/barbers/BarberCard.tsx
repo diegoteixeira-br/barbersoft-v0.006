@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Barber } from "@/hooks/useBarbers";
-import { Pencil, Trash2, Phone, Percent, Building2, Mail, CheckCircle2, Clock, Link2, Copy, Loader2, CreditCard, Coffee } from "lucide-react";
+import { Pencil, Trash2, Phone, Percent, Building2, Mail, CheckCircle2, Clock, Link2, Copy, Loader2, CreditCard, Coffee, Send, FileText } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -23,6 +23,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 interface BarberCardProps {
   barber: Barber;
@@ -31,11 +32,33 @@ interface BarberCardProps {
   onToggleActive: (id: string, is_active: boolean) => void;
   onGenerateInvite?: (id: string) => Promise<string | null>;
   showUnit?: boolean;
+  termAcceptance?: { accepted_at: string; term_version: string } | null;
+  hasActiveTerm?: boolean;
 }
 
-export function BarberCard({ barber, onEdit, onDelete, onToggleActive, onGenerateInvite, showUnit = false }: BarberCardProps) {
+export function BarberCard({ barber, onEdit, onDelete, onToggleActive, onGenerateInvite, showUnit = false, termAcceptance, hasActiveTerm }: BarberCardProps) {
   const { toast } = useToast();
   const [isGeneratingLink, setIsGeneratingLink] = useState(false);
+  const [isSendingTerm, setIsSendingTerm] = useState(false);
+
+  const handleSendTerm = async () => {
+    if (!barber.email) {
+      toast({ title: "Profissional não possui email cadastrado", variant: "destructive" });
+      return;
+    }
+    setIsSendingTerm(true);
+    try {
+      const { error } = await supabase.functions.invoke("send-barber-term", {
+        body: { barber_id: barber.id },
+      });
+      if (error) throw error;
+      toast({ title: "Termo enviado por email!", description: `Enviado para ${barber.email}` });
+    } catch (err: any) {
+      toast({ title: "Erro ao enviar termo", description: err.message, variant: "destructive" });
+    } finally {
+      setIsSendingTerm(false);
+    }
+  };
   const initials = barber.name
     .split(" ")
     .map((n) => n[0])
@@ -138,9 +161,43 @@ export function BarberCard({ barber, onEdit, onDelete, onToggleActive, onGenerat
               </div>
             )}
 
-            {/* Invite link button - only show if no user_id (not yet registered) */}
-            {!hasAccount && onGenerateInvite && (
-              <div className="mt-2">
+            {/* Term acceptance status */}
+            {hasActiveTerm && (
+              <div className="flex items-center gap-1 mt-1">
+                {termAcceptance ? (
+                  <Badge variant="outline" className="text-xs gap-1 bg-success/10 border-success/30 text-success">
+                    <CheckCircle2 className="h-3 w-3" />
+                    Termo aceito
+                  </Badge>
+                ) : (
+                  <Badge variant="outline" className="text-xs gap-1 bg-warning/10 border-warning/30 text-warning">
+                    <Clock className="h-3 w-3" />
+                    Termo pendente
+                  </Badge>
+                )}
+              </div>
+            )}
+
+            {/* Send term by email + Invite link */}
+            <div className="flex gap-2 mt-2 flex-wrap">
+              {hasActiveTerm && hasEmail && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-1.5 text-xs"
+                  disabled={isSendingTerm}
+                  onClick={handleSendTerm}
+                >
+                  {isSendingTerm ? (
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                  ) : (
+                    <Send className="h-3 w-3" />
+                  )}
+                  {isSendingTerm ? "Enviando..." : "Enviar Termo"}
+                </Button>
+              )}
+
+              {!hasAccount && onGenerateInvite && (
                 <Button
                   variant="outline"
                   size="sm"
@@ -149,12 +206,10 @@ export function BarberCard({ barber, onEdit, onDelete, onToggleActive, onGenerat
                   onClick={async () => {
                     setIsGeneratingLink(true);
                     try {
-                      // Use existing token or generate new one
                       let token = barber.invite_token;
                       if (!token) {
                         token = await onGenerateInvite(barber.id);
                       }
-                      
                       if (token) {
                         const inviteUrl = `${window.location.origin}/convite/${token}`;
                         await navigator.clipboard.writeText(inviteUrl);
@@ -177,8 +232,8 @@ export function BarberCard({ barber, onEdit, onDelete, onToggleActive, onGenerat
                   )}
                   {barber.invite_token ? "Copiar Link" : "Gerar Link de Convite"}
                 </Button>
-              </div>
-            )}
+              )}
+            </div>
           </div>
 
           <div className="flex flex-col gap-2">
