@@ -1,47 +1,35 @@
 
 
-# Proxy PHP para Preview de Compartilhamento do Blog
+# Remover Empresa Duplicada e Prevenir Duplicatas Futuras
 
 ## Problema
-O servidor da Hostinger (plano compartilhado) bloqueia o `mod_proxy`, então a flag `[P]` no `.htaccess` nao funciona. O fallback `302` nao permite que os robos do WhatsApp/Facebook leiam as tags OG, quebrando o preview rico.
+O usuario `dtsilva84@hotmail.com` possui 2 registros na tabela `companies` com o mesmo `owner_user_id`. A empresa mais antiga (09/02) e a correta, e a mais nova (16/02) e a duplicada.
 
-## Solucao
-Criar um arquivo PHP que atua como proxy local, buscando o HTML da Edge Function e entregando com status 200 no dominio `barbersoft.com.br`.
+## Dados encontrados
+
+```text
+ID: 507b3741... | Criada: 09/02/2026 | Status: trial (0 dias) -- MANTER
+ID: f50d4ea9... | Criada: 16/02/2026 | Status: trial (5 dias) -- EXCLUIR
+```
 
 ## Alteracoes
 
-### 1. Criar `public/share.php`
-- Recebe o parametro `slug` via `$_GET`
-- Faz requisicao HTTP para a Edge Function `blog-share` no Supabase
-- Retorna o HTML completo (com tags OG) com status 200
-- Inclui tratamento de erro com redirect para `/blog` caso falhe
+### 1. Excluir a empresa duplicada
+- Usar a edge function `delete-company` existente para excluir a empresa `f50d4ea9-474a-48cd-9d6d-f1c374abd44a` (a duplicada de 16/02)
+- Isso vai limpar todos os dados associados (unidades, barbeiros, servicos, etc.)
 
-### 2. Atualizar `public/.htaccess`
-- Remover as regras antigas de proxy (`[P]`) e redirect 302
-- Adicionar regra simples de rewrite interno: `/share/blog/{slug}` aponta para `share.php?slug={slug}` com flags `[L,QSA]`
-
-### 3. Manter `src/pages/institucional/BlogPost.tsx`
-- Sem alteracoes - ja usa a URL `barbersoft.com.br/share/blog/{slug}`
-
-## Fluxo
+### 2. Adicionar constraint unica no banco de dados
+- Criar uma migration que adiciona um indice unico na coluna `owner_user_id` da tabela `companies`
+- Isso impede que o mesmo usuario crie mais de uma empresa
+- Usa `CREATE UNIQUE INDEX` para garantir a restricao no nivel do banco
 
 ```text
-WhatsApp/Usuario acessa: barbersoft.com.br/share/blog/{slug}
-        |
-   .htaccess reescreve internamente para share.php?slug={slug}
-        |
-   share.php faz requisicao HTTP para Edge Function blog-share
-        |
-   Edge Function retorna HTML com tags OG
-        |
-   share.php retorna esse HTML com status 200
-        |
-   Robo le as tags OG / Usuario e redirecionado via meta refresh
+ALTER TABLE companies ADD CONSTRAINT unique_owner_user_id UNIQUE (owner_user_id);
 ```
 
-## Detalhes Tecnicos
+### 3. Verificar o fluxo de cadastro (opcional)
+- Revisar o codigo de criacao de empresa para garantir que faz um check antes de criar, como fallback adicional
 
-**share.php** usara `file_get_contents` com fallback para `cURL` caso o primeiro falhe (compatibilidade com diferentes configuracoes da Hostinger).
-
-**URL da Edge Function**: `https://lgrugpsyewvinlkgmeve.supabase.co/functions/v1/blog-share?slug={slug}`
-
+## Impacto
+- A empresa duplicada sera removida permanentemente
+- Novas tentativas de criar uma segunda empresa pelo mesmo usuario serao bloqueadas pelo banco de dados
